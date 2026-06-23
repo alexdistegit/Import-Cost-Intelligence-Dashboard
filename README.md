@@ -86,7 +86,6 @@ Import Cost Intelligence Dashboard/
 │   ├── charts.js       # Chart.js instances and update scripts
 │   └── app.js          # Controller, events setup, and CSV export
 ├── logo-distefano.png  # Distefano official corporate logo
-├── PLANILHA DE CALCULO DE IMPORTAÇÃO.xlsx # Original Excel calculations sheet
 ├── .gitignore          # Git exclusion rules
 └── README.md           # This documentation
 ```
