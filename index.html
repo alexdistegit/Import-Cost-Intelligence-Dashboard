@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import Landed Cost Dashboard — Distefano Consultoria</title>
+  <meta name="description" content="Dashboard executivo de simulação de custos de importação. Cálculo completo do landed cost com tributos brasileiros, custos operacionais e análise de composição.">
+  <meta name="author" content="Distefano Consultoria">
+  <meta name="robots" content="index, follow">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c9a84c'/%3E%3Ctext x='50%25' y='55%25' font-family='Inter,sans-serif' font-size='18' font-weight='800' fill='%23080c18' text-anchor='middle' dominant-baseline='middle'%3ED%3C/text%3E%3C/svg%3E">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════
+       HEADER
+       ═══════════════════════════════════════════════════ -->
+  <header class="header" id="header">
+    <div class="container">
+      <div class="header-left">
+        <a href="https://distefanoconsultoria.com/" target="_blank" rel="noopener" class="logo">
+          <img src="logo-distefano.png" alt="Distefano Consultoria Internacional" class="logo-img" style="height: 44px; width: auto; object-fit: contain;">
+        </a>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-secondary" id="btn-restore" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <span class="btn-label">Restaurar Exemplo</span>
+        </button>
+        <button class="btn btn-primary" id="btn-export" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="btn-label">Exportar CSV</span>
+        </button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema claro/escuro">
+          <span class="icon-sun">☀</span>
+          <span class="icon-moon">☾</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- ═══════════════════════════════════════════════════
+           PAGE HERO
+           ═══════════════════════════════════════════════════ -->
+      <section class="page-hero animate-in">
+        <h1>Import <span class="accent">Landed Cost</span> Dashboard</h1>
+        <p>Simulação completa do custo real de importação — da composição CIF aos tributos brasileiros e custos logísticos — com cálculo transparente e auditável do landed cost por tonelada.</p>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════
+           KPI CARDS
+           ═══════════════════════════════════════════════════ -->
+      <section class="kpi-grid" id="kpi-grid" aria-label="Indicadores-chave">
+
+        <div class="kpi-card animate-in" style="--kpi-accent: var(--blue)">
+          <div class="kpi-label">CIF Total USD</div>
+          <div class="kpi-value"><span class="kpi-currency">US$</span><span id="kpi-val-cif-usd">0.00</span></div>
+          <div class="kpi-sub">Cost, Insurance &amp; Freight</div>
+        </div>
+
+        <div class="kpi-card animate-in" style="--kpi-accent: var(--blue-soft)">
+          <div class="kpi-label">CIF Total BRL</div>
+          <div class="kpi-value"><span class="kpi-currency">R$</span><span id="kpi-val-cif-brl">0,00</span></div>
+          <div class="kpi-sub">Valor aduaneiro em reais</div>
+        </div>
+
+        <div class="kpi-card animate-in" style="--kpi-accent: var(--red)">
+          <div class="kpi-label">Tributos e Taxas</div>
+          <div class="kpi-value"><span class="kpi-currency">R$</span><span id="kpi-val-taxes">0,00</span></div>
+          <div class="kpi-sub">II + IPI + PIS + COFINS + ICMS</div>
+        </div>
+
+        <div class="kpi-card animate-in" style="--kpi-accent: var(--purple)">
+          <div class="kpi-label">Custos Operacionais</div>
+          <div class="kpi-value"><span class="kpi-currency">R$</span><span id="kpi-val-operational">0,00</span></div>
+          <div class="kpi-sub">Logística e portuários</div>
+        </div>
+
+        <div class="kpi-card highlight animate-in" style="--kpi-accent: var(--gold)">
+          <div class="kpi-label">Total Geral</div>
+          <div class="kpi-value"><span class="kpi-currency">R$</span><span id="kpi-val-total">0,00</span></div>
+          <div class="kpi-sub">Custo total da operação</div>
+        </div>
+
+        <div class="kpi-card animate-in" style="--kpi-accent: var(--green)">
+          <div class="kpi-label">Custo / Tonelada</div>
+          <div class="kpi-value"><span class="kpi-currency">R$</span><span id="kpi-val-per-ton">0,00</span></div>
+          <div class="kpi-sub">Landed cost unitário</div>
+        </div>
+
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════
+           MAIN 2-COLUMN LAYOUT
+           ═══════════════════════════════════════════════════ -->
+      <div class="grid-2col">
+
+        <!-- ═══ LEFT COLUMN: INPUT MODULES ═══ -->
+        <div class="col-inputs">
+
+          <!-- ─── DADOS DA OPERAÇÃO ─── -->
+          <section class="module animate-in" id="mod-operation">
+            <div class="module-header">
+              <h2 class="module-title">
+                <span class="module-icon icon-blue">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </span>
+                Dados da Operação
+              </h2>
+              <span class="module-badge">Cadastro</span>
+            </div>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="form-label" for="inp-importador">Importador</label>
+                <input class="form-input" type="text" id="inp-importador" placeholder="Nome da empresa importadora">
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label" for="inp-produto">Produto</label>
+                <input class="form-input" type="text" id="inp-produto" placeholder="Descrição do produto">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-ncm">
+                  NCM
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Nomenclatura Comum do Mercosul — Código de 8 dígitos que classifica o produto e determina alíquotas.</span>
+                  </span>
+                </label>
+                <input class="form-input" type="text" id="inp-ncm" placeholder="0000.00.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-quantidade">Quantidade</label>
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-quantidade" step="1" min="0">
+                  <span class="input-suffix">tons</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-porto">Porto / Local</label>
+                <input class="form-input" type="text" id="inp-porto" placeholder="Ex: Santos/SP">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-modal">Modal</label>
+                <select class="form-input" id="inp-modal">
+                  <option value="Marítimo">Marítimo</option>
+                  <option value="Aéreo">Aéreo</option>
+                  <option value="Rodoviário">Rodoviário</option>
+                  <option value="Ferroviário">Ferroviário</option>
+                  <option value="Multimodal">Multimodal</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-incoterm">
+                  Incoterm
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Termo internacional de comércio (ICC) que define responsabilidades entre comprador e vendedor.</span>
+                  </span>
+                </label>
+                <select class="form-input" id="inp-incoterm">
+                  <option value="FOB">FOB — Free on Board</option>
+                  <option value="CFR">CFR — Cost and Freight</option>
+                  <option value="CIF">CIF — Cost, Insurance &amp; Freight</option>
+                  <option value="EXW">EXW — Ex Works</option>
+                  <option value="FCA">FCA — Free Carrier</option>
+                  <option value="DDP">DDP — Delivered Duty Paid</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-cambio">Taxa de Câmbio (R$/US$)</label>
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-cambio" step="0.01" min="0">
+                  <span class="input-suffix">R$/US$</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── CUSTOS INTERNACIONAIS ─── -->
+          <section class="module animate-in" id="mod-international">
+            <div class="module-header">
+              <h2 class="module-title">
+                <span class="module-icon icon-gold">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </span>
+                Custos Internacionais
+              </h2>
+              <span class="module-badge">USD</span>
+            </div>
+            <div class="form-grid form-grid-3">
+              <div class="form-group">
+                <label class="form-label" for="inp-fob">FOB Unitário</label>
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-fob" step="0.01" min="0">
+                  <span class="input-suffix">US$</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-frete">Frete Unitário</label>
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-frete" step="0.01" min="0">
+                  <span class="input-suffix">US$</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-seguro">Seguro Total</label>
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-seguro" step="0.01" min="0">
+                  <span class="input-suffix">US$</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Calculated CIF values -->
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">
+                  CIF Total em US$
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Cost, Insurance &amp; Freight — Valor total da mercadoria incluindo frete e seguro no porto de destino.</span>
+                  </span>
+                </label>
+                <div class="calc-display">
+                  <span class="calc-prefix">US$</span>
+                  <span class="calc-value accent-blue" id="calc-cif-usd">0.00</span>
+                </div>
+                <span class="form-suffix">(FOB × Qtd) + (Frete × Qtd) + Seguro</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">CIF Total em R$</label>
+                <div class="calc-display">
+                  <span class="calc-prefix">R$</span>
+                  <span class="calc-value accent-gold" id="calc-cif-brl">0,00</span>
+                </div>
+                <span class="form-suffix">CIF USD × Taxa de Câmbio</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── TRIBUTOS E TAXAS ─── -->
+          <section class="module animate-in" id="mod-taxes">
+            <div class="module-header">
+              <h2 class="module-title">
+                <span class="module-icon icon-red">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </span>
+                Tributos e Taxas
+              </h2>
+              <span class="module-badge">Alíquotas</span>
+            </div>
+
+            <!-- II -->
+            <div class="tax-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-ii-rate">
+                  Imposto de Importação
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Tributo federal incidente sobre o valor CIF em R$. Alíquota definida pela TEC (Tarifa Externa Comum).</span>
+                  </span>
+                </label>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-ii-rate" step="0.01" min="0" max="100">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="calc-display">
+                  <span class="calc-prefix">R$</span>
+                  <span class="calc-value" id="calc-ii">0,00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- IPI -->
+            <div class="tax-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-ipi-rate">
+                  IPI
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Imposto sobre Produtos Industrializados — Incide sobre o valor CIF + II. Alíquota varia conforme classificação NCM.</span>
+                  </span>
+                </label>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-ipi-rate" step="0.01" min="0" max="100">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="calc-display">
+                  <span class="calc-prefix">R$</span>
+                  <span class="calc-value" id="calc-ipi">0,00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PIS -->
+            <div class="tax-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-pis-rate">
+                  PIS-Importação
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Contribuição social incidente sobre o valor aduaneiro (CIF em R$).</span>
+                  </span>
+                </label>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-pis-rate" step="0.01" min="0" max="100">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="calc-display">
+                  <span class="calc-prefix">R$</span>
+                  <span class="calc-value" id="calc-pis">0,00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- COFINS -->
+            <div class="tax-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-cofins-rate">
+                  COFINS-Importação
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Contribuição social incidente sobre o valor aduaneiro (CIF em R$).</span>
+                  </span>
+                </label>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-cofins-rate" step="0.01" min="0" max="100">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="calc-display">
+                  <span class="calc-prefix">R$</span>
+                  <span class="calc-value" id="calc-cofins">0,00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ICMS -->
+            <div class="tax-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-icms-rate">
+                  ICMS
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Imposto estadual calculado "por dentro", ou seja, sobre uma base que já inclui o próprio ICMS (base = valor / (1 − alíquota)).</span>
+                  </span>
+                </label>
+                <span class="form-suffix">Base ICMS: R$ <span id="calc-base-icms">0,00</span> (por dentro)</span>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-icms-rate" step="0.01" min="0" max="100">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="calc-display">
+                  <span class="calc-prefix">R$</span>
+                  <span class="calc-value accent-red" id="calc-icms">0,00</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- AFRMM, SISCOMEX, Despachante -->
+            <div class="form-grid form-grid-3" style="margin-bottom: var(--space-4)">
+              <div class="form-group">
+                <label class="form-label" for="inp-afrmm">
+                  AFRMM
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Adicional ao Frete para Renovação da Marinha Mercante — Taxa de 8% sobre o frete marítimo internacional.</span>
+                  </span>
+                </label>
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-afrmm" step="0.01" min="0" readonly>
+                  <span class="input-suffix">R$</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-siscomex">
+                  SISCOMEX
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Taxa de Utilização do SISCOMEX — Valor fixo cobrado por declaração de importação (DI).</span>
+                  </span>
+                </label>
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-siscomex" step="0.01" min="0">
+                  <span class="input-suffix">R$</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-despachante">
+                  Despachante
+                  <span class="tooltip-container">
+                    <span class="tooltip-trigger">?</span>
+                    <span class="tooltip-content">Honorários do Despachante Aduaneiro — Valor do serviço de desembaraço aduaneiro.</span>
+                  </span>
+                </label>
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-despachante" step="0.01" min="0">
+                  <span class="input-suffix">R$</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Tributos -->
+            <div class="tax-subtotal">
+              <span class="label">Total Tributos e Taxas</span>
+              <span class="value">R$ <span id="calc-total-taxes">0,00</span></span>
+            </div>
+          </section>
+
+          <!-- ─── CUSTOS OPERACIONAIS ─── -->
+          <section class="module animate-in" id="mod-operational">
+            <div class="module-header">
+              <h2 class="module-title">
+                <span class="module-icon icon-purple">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </span>
+                Custos Operacionais
+              </h2>
+              <span class="module-badge">Logística</span>
+            </div>
+
+            <div class="form-grid" style="margin-bottom: var(--space-4)">
+              <div class="form-group">
+                <label class="form-label" for="inp-containers">Quantidade de Containers</label>
+                <input class="form-input" type="number" id="inp-containers" step="1" min="0">
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-armazenagem">Armazenagem</label>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-armazenagem" step="0.01" min="0">
+                  <span class="input-suffix">R$</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-advalorem">Ad Valorem</label>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-advalorem" step="0.01" min="0">
+                  <span class="input-suffix">R$</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-vistoria">Posicionamento Vistoria</label>
+                <span class="ops-note">× containers</span>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-vistoria" step="0.01" min="0">
+                  <span class="input-suffix">R$/ctr</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-remocao">Remoção Costado</label>
+                <span class="ops-note">× containers</span>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-remocao" step="0.01" min="0">
+                  <span class="input-suffix">R$/ctr</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-handling">Handling In/Out</label>
+                <span class="ops-note">× containers</span>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-handling" step="0.01" min="0">
+                  <span class="input-suffix">R$/ctr</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-blfee">BL Fee</label>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-blfee" step="0.01" min="0">
+                  <span class="input-suffix">R$</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-thc">THC Terminal / Armador</label>
+                <span class="ops-note">× containers</span>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-thc" step="0.01" min="0">
+                  <span class="input-suffix">R$/ctr</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-transporte">Transporte Ctr Cheio/Vazio</label>
+                <span class="ops-note">× containers</span>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-transporte" step="0.01" min="0">
+                  <span class="input-suffix">R$/ctr</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-desova">Desova</label>
+                <span class="ops-note">× containers</span>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-desova" step="0.01" min="0">
+                  <span class="input-suffix">R$/ctr</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ops-line">
+              <div class="form-group">
+                <label class="form-label" for="inp-outros">Outros Custos Locais</label>
+              </div>
+              <div class="form-group">
+                <div class="form-input-wrapper">
+                  <input class="form-input" type="number" id="inp-outros" step="0.01" min="0">
+                  <span class="input-suffix">R$</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Operacional -->
+            <div class="tax-subtotal">
+              <span class="label">Total Custos Operacionais</span>
+              <span class="value" style="color: var(--blue)">R$ <span id="calc-total-operational">0,00</span></span>
+            </div>
+          </section>
+
+        </div><!-- /.col-inputs -->
+
+        <!-- ═══ RIGHT COLUMN: SUMMARY & CHARTS ═══ -->
+        <div class="col-summary">
+
+          <!-- ─── RESUMO DA OPERAÇÃO ─── -->
+          <section class="module animate-in" id="mod-summary">
+            <div class="module-header">
+              <h2 class="module-title">
+                <span class="module-icon icon-green">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </span>
+                Resumo da Operação
+              </h2>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-label"><span class="dot dot-gold"></span>Custo da Mercadoria (CIF R$)</span>
+              <span>
+                <span class="summary-value">R$ <span id="sum-mercadoria">0,00</span></span>
+                <span class="summary-pct" id="sum-pct-mercadoria">0,0%</span>
+              </span>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-label"><span class="dot dot-red"></span>Tributos e Taxas</span>
+              <span>
+                <span class="summary-value">R$ <span id="sum-tributos">0,00</span></span>
+                <span class="summary-pct" id="sum-pct-tributos">0,0%</span>
+              </span>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-label"><span class="dot dot-blue"></span>Custos Operacionais</span>
+              <span>
+                <span class="summary-value">R$ <span id="sum-operacional">0,00</span></span>
+                <span class="summary-pct" id="sum-pct-operacional">0,0%</span>
+              </span>
+            </div>
+
+            <div class="summary-row total-row">
+              <span class="summary-label">Total Geral da Operação</span>
+              <span class="summary-value">R$ <span id="sum-total">0,00</span></span>
+            </div>
+
+            <div class="summary-row per-ton-row">
+              <span class="summary-label"><span class="dot dot-green"></span>Custo Landed por Tonelada</span>
+              <span class="summary-value">R$ <span id="sum-per-ton">0,00</span></span>
+            </div>
+          </section>
+
+          <!-- ─── COMPOSIÇÃO DE CUSTOS (DOUGHNUT) ─── -->
+          <section class="module animate-in" id="mod-chart-doughnut">
+            <div class="module-header">
+              <h2 class="module-title">
+                <span class="module-icon icon-gold">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                </span>
+                Composição do Custo Total
+              </h2>
+            </div>
+            <div class="chart-wrapper">
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-doughnut"></canvas>
+              </div>
+              <div class="chart-legend">
+                <p><strong>Mercadoria</strong> — Valor CIF convertido em R$, base de todos os tributos. <strong>Tributos</strong> — II, IPI, PIS, COFINS, ICMS e taxas aduaneiras. <strong>Operacional</strong> — Custos portuários, logísticos e de desembaraço.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── RANKING DE CUSTOS (BAR) ─── -->
+          <section class="module animate-in" id="mod-chart-bar">
+            <div class="module-header">
+              <h2 class="module-title">
+                <span class="module-icon icon-blue">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </span>
+                Ranking de Custos Individuais
+              </h2>
+            </div>
+            <div class="chart-wrapper">
+              <div class="chart-canvas-wrapper" style="max-height: 380px">
+                <canvas id="chart-bar" style="max-height: 380px"></canvas>
+              </div>
+            </div>
+          </section>
+
+        </div><!-- /.col-summary -->
+      </div><!-- /.grid-2col -->
+
+    </div><!-- /.container -->
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <p>Import Landed Cost Dashboard — <a href="https://distefanoconsultoria.com/" target="_blank" rel="noopener">Distefano Consultoria Internacional</a> · Simulação de custos para fins de planejamento. Não substitui análise aduaneira profissional.</p>
+    </div>
+  </footer>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts (order matters: state → calc → renderer → charts → app) -->
+  <script src="js/state.js"></script>
+  <script src="js/calculations.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
